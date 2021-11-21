@@ -1,0 +1,31 @@
+{
+    "extends": ["airbnb", "prettier", "plugin:node/recommended"],
+    "plugins": ["prettier"],
+    "globals": {
+        "$": true,
+        "Ajax": true,
+        "document": true,
+        "format_money": true,
+        "format_number": true,
+        "Game": true,
+        "GiftBomber": true,
+        "ItemManager": true,
+        "localStorage": true,
+        "MessageError": true,
+        "west": true,
+        "wman": true
+    },
+    "rules": {
+        "prettier/prettier": "error",
+        "no-unused-vars": "error",
+        "no-console": 1,
+        "func-names": "off",
+        "no-var": "off",
+        "prefer-arrow-callback": "off",
+        "vars-on-top": "off",
+        "one-var": "off",
+        "prefer-destructuring": "off",
+        "prefer-template": "off",
+        "consistent-return": "off"
+    }
+}
