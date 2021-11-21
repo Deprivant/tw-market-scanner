@@ -82,6 +82,7 @@ TWMarketScanner.scanMarket = function (pattern) {
 
 TWMarketScanner.getAllScans = function () {
     var savedData = JSON.parse(localStorage.getItem('twms_settings'));
+
     if (!savedData) return null;
 
     $.when(
@@ -96,36 +97,83 @@ TWMarketScanner.getAllScans = function () {
         TWMarketScanner.scanMarket(savedData[8].searchText),
         TWMarketScanner.scanMarket(savedData[9].searchText)
     ).done(function (...results) {
-        var data = [],
-            undefinedCount;
+        var dataForAll = [], // array with filtered results for all items (all rows of inputs in setting)
+            dataForItem, // filtered results for one item (one row of input in setting)
+            auctionPricePerPiece,
+            maxPricePerPiece,
+            pricePerPiece,
+            resultForOneItem,
+            itemCount,
+            itemId,
+            totalPrice,
+            limit,
+            found,
+            i,
+            u;
 
-        for (let i = 0; i < results.length; i += 1) {
+        for (i = 0; i < results.length; i += 1) {
             if (results[i]) {
-                data.push(
-                    results[i][0].msg.search_result.length > 0
-                        ? results[i][0].msg.search_result
-                        : null
-                );
-            } else data.push(null);
+                if (results[i][0].msg.search_result.length > 0) {
+                    resultForOneItem = results[i][0].msg.search_result;
+
+                    dataForItem = {};
+                    limit =
+                        Number(savedData[i].limit) === 0
+                            ? TWMarketScanner.NO_LIMIT
+                            : savedData[i].limit;
+                    found = false;
+
+                    for (u = 0; u < resultForOneItem.length; u += 1) {
+                        auctionPricePerPiece =
+                            resultForOneItem[u].auction_price /
+                            resultForOneItem[u].item_count;
+                        maxPricePerPiece =
+                            resultForOneItem[u].max_price /
+                            resultForOneItem[u].item_count;
+                        pricePerPiece =
+                            auctionPricePerPiece || maxPricePerPiece;
+
+                        itemCount = resultForOneItem[u].item_count;
+                        itemId = resultForOneItem[u].item_id;
+
+                        if (Number(limit) >= Number(pricePerPiece)) {
+                            found = true;
+                            itemCount = resultForOneItem[u].item_count;
+                            itemId = resultForOneItem[u].item_id;
+
+                            totalPrice =
+                                resultForOneItem[u].auction_price ||
+                                resultForOneItem[u].max_price;
+
+                            dataForItem[u] = {
+                                itemId,
+                                pricePerPiece,
+                                itemCount,
+                                totalPrice,
+                            };
+                        }
+                    }
+
+                    if (found) {
+                        dataForAll.push({
+                            setting: {
+                                searchText: savedData[i].searchText,
+                                limit,
+                            },
+                            items: dataForItem,
+                        });
+                    }
+                }
+            }
         }
 
-        // if all results are null, go back
-        undefinedCount = data.filter(function (value) {
-            return value === null;
-        }).length;
-
-        if (undefinedCount === TWMarketScanner.MAX_OFFERS) return null;
+        // if found nothing, go back
+        if (dataForAll.length === 0) return;
 
         var content = $("<div class='twms-table-wrapper' />");
 
-        for (let i = 0; i < data.length; i += 1) {
-            content.append(
-                TWMarketScanner.generateTable(
-                    data[i],
-                    savedData[i].searchText,
-                    savedData[i].limit
-                )
-            );
+        for (i = 0; i < dataForAll.length; i += 1) {
+            content.append(TWMarketScanner.generateTable(dataForAll[i]));
         }
 
         var resultWindow = new west.gui.Dialog(
@@ -147,29 +195,28 @@ TWMarketScanner.getItemName = function (itemId) {
     return { name: result.name, imageUrl: result.image };
 };
 
-TWMarketScanner.generateTable = function (data, searchText, limit) {
-    // eslint-disable-next-line no-param-reassign
-    if (!searchText) searchText = '';
-    if (!data) return '';
-    // eslint-disable-next-line no-param-reassign
-    if (limit === '0' || limit === '') limit = TWMarketScanner.NO_LIMIT;
-
-    var auctionPrice,
-        itemId,
-        maxPrice,
-        itemCount,
-        auctionPricePerPiece,
-        maxPricePerPiece,
+TWMarketScanner.generateTable = function (data) {
+    var itemCount,
         table,
         row,
         pricePerPiece,
-        sum,
+        totalPrice,
         thead,
         item,
         cells,
         caption,
-        foundAnything,
-        limitText;
+        limitText,
+        limit,
+        searchText,
+        setting,
+        itemsData;
+
+    setting = data.setting;
+    itemsData = data.items;
+
+    limit = setting.limit; // same limit is in every result, so we take first one
+
+    searchText = setting.searchText; // same searchText is in every result, so we take first one
 
     table = $("<table class='twms-table' />");
 
@@ -208,42 +255,33 @@ TWMarketScanner.generateTable = function (data, searchText, limit) {
     table.append(caption);
     table.append(thead);
 
-    foundAnything = false;
-    for (let i = 0; i < data.length; i += 1) {
-        auctionPrice = data[i].auction_price;
-        maxPrice = data[i].max_price;
-        itemCount = data[i].item_count;
-        itemId = data[i].item_id;
-        auctionPricePerPiece = auctionPrice / itemCount;
-        maxPricePerPiece = maxPrice / itemCount;
-        item = TWMarketScanner.getItemName(itemId);
+    $.each(itemsData, function (_key, value) {
+        item = TWMarketScanner.getItemName(value.itemId);
 
-        pricePerPiece = auctionPricePerPiece || maxPricePerPiece;
-
-        sum = auctionPrice || maxPrice;
+        pricePerPiece = value.pricePerPiece;
+        itemCount = value.itemCount;
+        totalPrice = value.totalPrice;
 
         row = $('<tr/>');
 
-        if (Number(limit) >= Number(pricePerPiece)) {
-            cells = $(
-                "<td><img class='twms-item-image' src='" +
-                    item.imageUrl +
-                    "' /></td><td class='twms-text-left'>" +
-                    item.name +
-                    "<td class='twms-text-right'>$" +
-                    format_money(pricePerPiece) +
-                    "</td><td class='twms-text-center'>" +
-                    format_number(itemCount) +
-                    "</td><td class='twms-text-right'>$" +
-                    format_money(sum) +
-                    '</td>'
-            );
-            foundAnything = true;
-            row.append(cells);
-            table.append(row);
-        }
-    }
-    if (!foundAnything) table = '';
+        cells = $(
+            "<td><img class='twms-item-image' src='" +
+                item.imageUrl +
+                "' /></td><td class='twms-text-left'>" +
+                item.name +
+                "<td class='twms-text-right'>$" +
+                format_money(pricePerPiece) +
+                "</td><td class='twms-text-center'>" +
+                format_number(itemCount) +
+                "</td><td class='twms-text-right'>$" +
+                format_money(totalPrice) +
+                '</td>'
+        );
+
+        row.append(cells);
+        table.append(row);
+    });
+
     return table;
 };
 
@@ -262,7 +300,9 @@ TWMarketScanner.init = function () {
     TWMarketScanner.setStyle();
     var div = $('<div class="ui_menucontainer">/');
     var link = $(
-        '<div id="TWMS-menuLink" class="menulink"><svg viewBox="0 0 24 24"><path fill="lightgray" d="M19.74 18.33C21.15 16.6 22 14.4 22 12c0-5.52-4.48-10-10-10S2 6.48 2 12s4.48 10 10 10c2.4 0 4.6-.85 6.33-2.26.27-.22.53-.46.78-.71.03-.03.05-.06.07-.08.2-.2.39-.41.56-.62zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8c0 1.85-.63 3.54-1.69 4.9l-1.43-1.43c.69-.98 1.1-2.17 1.1-3.46 0-3.31-2.69-6-6-6s-6 2.69-6 6 2.69 6 6 6c1.3 0 2.51-.42 3.49-1.13l1.42 1.42C15.54 19.37 13.85 20 12 20zm1.92-7.49c.17-.66.02-1.38-.49-1.9l-.02-.02c-.77-.77-2-.78-2.78-.04-.01.01-.03.02-.05.04-.78.78-.78 2.05 0 2.83l.02.02c.52.51 1.25.67 1.91.49l1.51 1.51c-.6.36-1.29.58-2.04.58-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4c0 .73-.21 1.41-.56 2l-1.5-1.51z"></path></svg></div>'
+        '<div id="TWMS-menuLink" class="menulink" title="' +
+            TWMarketScanner.SCRIPT_NAME +
+            '" ><svg viewBox="0 0 24 24"><path fill="lightgray" d="M19.74 18.33C21.15 16.6 22 14.4 22 12c0-5.52-4.48-10-10-10S2 6.48 2 12s4.48 10 10 10c2.4 0 4.6-.85 6.33-2.26.27-.22.53-.46.78-.71.03-.03.05-.06.07-.08.2-.2.39-.41.56-.62zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8c0 1.85-.63 3.54-1.69 4.9l-1.43-1.43c.69-.98 1.1-2.17 1.1-3.46 0-3.31-2.69-6-6-6s-6 2.69-6 6 2.69 6 6 6c1.3 0 2.51-.42 3.49-1.13l1.42 1.42C15.54 19.37 13.85 20 12 20zm1.92-7.49c.17-.66.02-1.38-.49-1.9l-.02-.02c-.77-.77-2-.78-2.78-.04-.01.01-.03.02-.05.04-.78.78-.78 2.05 0 2.83l.02.02c.52.51 1.25.67 1.91.49l1.51 1.51c-.6.36-1.29.58-2.04.58-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4c0 .73-.21 1.41-.56 2l-1.5-1.51z"></path></svg></div>'
     );
     link.click(function () {
         TWMarketScanner.showSetting();
@@ -306,7 +346,7 @@ TWMarketScanner.showSetting = function () {
         .setSize(550, 458);
 
     form = $('<div />');
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < TWMarketScanner.MAX_OFFERS; i += 1) {
         row = $("<div class='twms-form-row'/>");
         inputItem = new west.gui.Textfield('item-' + (i + 1));
         inputItem.setLabel(
@@ -338,7 +378,7 @@ TWMarketScanner.showSetting = function () {
         function () {
             var dataToSave = [];
 
-            for (let i = 0; i < 10; i += 1) {
+            for (let i = 0; i < TWMarketScanner.MAX_OFFERS; i += 1) {
                 searchText = $('#twms-item-' + (i + 1))
                     .val()
                     .trim();
