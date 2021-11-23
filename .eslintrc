@@ -7,13 +7,15 @@
         "document": true,
         "format_money": true,
         "format_number": true,
+        "Character": true,
         "Game": true,
         "GiftBomber": true,
         "ItemManager": true,
         "localStorage": true,
+        "MarketWindow": true,
         "MessageError": true,
         "west": true,
-        "wman": true
+        "wman": true,
     },
     "rules": {
         "prettier/prettier": "error",

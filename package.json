@@ -1,9 +1,14 @@
 {
     "name": "tw-market-scanner",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "The Script for the-west.cz.",
     "main": "scr/script.js",
     "author": "Deprivant",
+    "homepage": "https://deprivant.github.io/tw-market-scanner/",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Deprivant/tw-market-scanner.git"
+    },
     "license": "MIT",
     "private": true,
     "scripts": {
@@ -30,5 +35,8 @@
         "grunt-contrib-uglify": "^5.0.1",
         "grunt-replace": "^2.0.2",
         "prettier": "^2.4.1"
+    },
+    "dependencies": {
+        "grunt-remove-logging": "^0.2.0"
     }
 }

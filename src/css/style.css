@@ -72,6 +72,11 @@
     margin-left: 10px;
 }
 
+#twms-checkbox-power {
+    margin-bottom: 10px;
+    margin-left: 10px;
+}
+
 /* menuLink */
 
 #TWMS-menuLink {
@@ -84,6 +89,19 @@
 #TWMS-menuLink svg {
     margin-top: 3px;
     width: 20px;
+    fill: lightgray;
+}
+
+#TWMS-menuLink svg {
+    margin-top: 3px;
+    width: 20px;
+}
+#TWMS-menuLink svg path {
+    fill: lightgray;
+}
+
+#TWMS-menuLink.power-off svg path {
+    fill: dimgrey;
 }
 
 /* other */
