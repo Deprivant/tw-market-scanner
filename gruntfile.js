@@ -3,10 +3,14 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
-        cssmin: {
-            css: {
-                src: 'src/css/style.css',
-                dest: 'tmp/css.min.css',
+        less: {
+            production: {
+                options: {
+                    compress: true,
+                },
+                files: {
+                    'tmp/css.min.css': 'src/css/style.less', // destination file and source file
+                },
             },
         },
 
@@ -22,6 +26,20 @@ module.exports = function (grunt) {
                         {
                             match: 'scriptVersion',
                             replacement: '<%= pkg.version %>',
+                        },
+                        {
+                            match: 'homepage',
+                            replacement: '<%= pkg.homepage %>',
+                        },
+                        {
+                            match: 'beepSound',
+                            replacement:
+                                '<%= grunt.file.read("src/sound/beep") %>',
+                        },
+                        {
+                            match: 'svgRadarIcon',
+                            replacement:
+                                '<%= grunt.file.read("src/images/radar.svg") %>',
                         },
                     ],
                 },
@@ -80,15 +98,14 @@ module.exports = function (grunt) {
 
         clean: { build: ['tmp/*', 'tmp'] },
     });
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
+    grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-replace');
     grunt.loadNpmTasks('grunt-remove-logging');
     grunt.loadNpmTasks('grunt-contrib-uglify');
-
     grunt.loadNpmTasks('grunt-contrib-clean');
 
     grunt.registerTask('default', [
-        'cssmin',
+        'less',
         'replace',
         'removelogging',
         'uglify',

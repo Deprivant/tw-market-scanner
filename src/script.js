@@ -5,8 +5,11 @@ var TWMarketScanner = {
     MAX_OFFERS: 10, // count of items to find in the market
     NO_LIMIT: 9999999, // max price if set 0 or empty string
     SETTING_PREFIX: 'twms_settings_' + Game.worldName,
-    power: undefined, // boolean  - if timer is off or on
-    setting: undefined, // setting for this world
+    setting: {
+        data: undefined, // setting for this world
+        power: undefined, // boolean  - if timer is off or on
+        sound: undefined, // boolean - sound setting (on/off)
+    },
     languagePrefix: Game.locale === 'cs_CZ' ? 'cs' : 'en',
 
     language: {
@@ -29,6 +32,9 @@ var TWMarketScanner = {
             checkboxPowerLabel: 'Skenování trhu je aktivní',
             checkboxPowerTooltip:
                 'Zapne/vypne automatické skenování trhu podle požadovaného nastavení',
+            checkboxSoundLabel: 'Zapnout zvuk',
+            checkboxSoundTooltip:
+                'Zapne/vypne zvukové upozornění při nalezení produktu na trhu',
         },
         en: {
             ajaxErrorMessage: 'Connection problem with server.',
@@ -48,6 +54,9 @@ var TWMarketScanner = {
             worldError: 'Problem with world name',
             checkboxPowerLabel: 'Market scanner is active',
             checkboxPowerTooltip: 'Start/stop automatic market scanner',
+            checkboxSoundLabel: 'Turn on the sound',
+            checkboxSoundTooltip:
+                'Turn on/off the sound alert when the item in the market is found',
         },
     },
 };
@@ -55,6 +64,10 @@ var TWMarketScanner = {
 TWMarketScanner.setStyle = function () {
     var style = '@@cssStyles'; // grunt will import real styles
     $('<style>').text(style).appendTo(document.head);
+};
+
+TWMarketScanner.beep = function () {
+    new Audio('@@beepSound').play();
 };
 
 TWMarketScanner.openMarketWindow = function (element) {
@@ -87,16 +100,18 @@ TWMarketScanner.getSetting = function () {
         for (let i = 0; i < TWMarketScanner.MAX_OFFERS; i += 1) {
             dataToSave.push({ searchText: '', limit: '' });
         }
-        TWMarketScanner.setting = dataToSave;
-        TWMarketScanner.power = true;
+        TWMarketScanner.setting.data = dataToSave;
+        TWMarketScanner.setting.power = true;
+        TWMarketScanner.setting.sound = true;
 
         localStorage.setItem(
             TWMarketScanner.SETTING_PREFIX,
-            JSON.stringify({ power: 'on', setting: dataToSave })
+            JSON.stringify({ power: 'on', sound: 'on', setting: dataToSave })
         );
     } else {
-        TWMarketScanner.power = savedData.power !== 'off';
-        TWMarketScanner.setting = savedData.setting;
+        TWMarketScanner.setting.power = savedData.power !== 'off';
+        TWMarketScanner.setting.sound = savedData.sound !== 'off';
+        TWMarketScanner.setting.data = savedData.setting;
     }
 };
 
@@ -139,19 +154,19 @@ TWMarketScanner.scanMarket = function (pattern) {
 };
 
 TWMarketScanner.getAllScans = function () {
-    if (!TWMarketScanner.power) return null;
+    if (!TWMarketScanner.setting.power) return null;
 
     $.when(
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[0].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[1].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[2].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[3].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[4].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[5].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[6].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[7].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[8].searchText),
-        TWMarketScanner.scanMarket(TWMarketScanner.setting[9].searchText)
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[0].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[1].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[2].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[3].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[4].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[5].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[6].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[7].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[8].searchText),
+        TWMarketScanner.scanMarket(TWMarketScanner.setting.data[9].searchText)
     ).done(function (...results) {
         // eslint-disable-next-line no-console
         console.log('Komplet výsledky z ajaxu pro všechy dotazy:', results);
@@ -183,9 +198,9 @@ TWMarketScanner.getAllScans = function () {
 
                     dataForItem = {};
                     limit =
-                        Number(TWMarketScanner.setting[i].limit) === 0
+                        Number(TWMarketScanner.setting.data[i].limit) === 0
                             ? TWMarketScanner.NO_LIMIT
-                            : TWMarketScanner.setting[i].limit;
+                            : TWMarketScanner.setting.data[i].limit;
                     found = false;
 
                     for (u = 0; u < resultForOneItem.length; u += 1) {
@@ -223,7 +238,7 @@ TWMarketScanner.getAllScans = function () {
                         dataForAll.push({
                             setting: {
                                 searchText:
-                                    TWMarketScanner.setting[i].searchText,
+                                    TWMarketScanner.setting.data[i].searchText,
                                 limit,
                             },
                             items: dataForItem,
@@ -241,6 +256,8 @@ TWMarketScanner.getAllScans = function () {
         for (i = 0; i < dataForAll.length; i += 1) {
             content.append(TWMarketScanner.generateTable(dataForAll[i]));
         }
+
+        if (TWMarketScanner.setting.sound) TWMarketScanner.beep();
 
         TWMarketScanner.resultsWindow
             .setText(content)
@@ -390,7 +407,7 @@ TWMarketScanner.init = function () {
     var link = $(
         '<div id="TWMS-menuLink" class="menulink" title="' +
             TWMarketScanner.SCRIPT_NAME +
-            '" ><svg viewBox="0 0 24 24"><path fill="lightgray" d="M19.74 18.33C21.15 16.6 22 14.4 22 12c0-5.52-4.48-10-10-10S2 6.48 2 12s4.48 10 10 10c2.4 0 4.6-.85 6.33-2.26.27-.22.53-.46.78-.71.03-.03.05-.06.07-.08.2-.2.39-.41.56-.62zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8c0 1.85-.63 3.54-1.69 4.9l-1.43-1.43c.69-.98 1.1-2.17 1.1-3.46 0-3.31-2.69-6-6-6s-6 2.69-6 6 2.69 6 6 6c1.3 0 2.51-.42 3.49-1.13l1.42 1.42C15.54 19.37 13.85 20 12 20zm1.92-7.49c.17-.66.02-1.38-.49-1.9l-.02-.02c-.77-.77-2-.78-2.78-.04-.01.01-.03.02-.05.04-.78.78-.78 2.05 0 2.83l.02.02c.52.51 1.25.67 1.91.49l1.51 1.51c-.6.36-1.29.58-2.04.58-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4c0 .73-.21 1.41-.56 2l-1.5-1.51z"></path></svg></div>'
+            '" >@@svgRadarIcon</div>'
     );
     link.click(function () {
         TWMarketScanner.showSetting();
@@ -401,7 +418,8 @@ TWMarketScanner.init = function () {
 
     $('#ui_menubar').append(div);
 
-    if (!TWMarketScanner.power) $('#TWMS-menuLink').addClass('power-off');
+    if (!TWMarketScanner.setting.power)
+        $('#TWMS-menuLink').addClass('power-off');
 
     TWMarketScanner.getAllScans();
     TWMarketScanner.startTimer();
@@ -411,7 +429,10 @@ TWMarketScanner.showSetting = function () {
     var buttonsWrapper,
         cancelBtn,
         form,
+        checkboxesWrapper,
+        footerWrapper,
         checkboxPower,
+        checkboxSound,
         info,
         inputItem,
         inputLimit,
@@ -423,7 +444,7 @@ TWMarketScanner.showSetting = function () {
         searchText,
         settingWindow;
 
-    savedSetting = TWMarketScanner.setting;
+    savedSetting = TWMarketScanner.setting.data;
 
     settingWindow = wman
         .open('twms-setting', null)
@@ -433,24 +454,38 @@ TWMarketScanner.showSetting = function () {
         .setTitle(
             TWMarketScanner.language[TWMarketScanner.languagePrefix].setting
         )
-        .setMinSize(550, 490)
-        .setSize(550, 490);
+        .setMinSize(540, 484)
+        .setSize(540, 484);
 
     form = $('<div />');
+
+    checkboxesWrapper = $('<div class="twms-2-columns-wrapper" />');
 
     checkboxPower = new west.gui.Checkbox(
         TWMarketScanner.language[
             TWMarketScanner.languagePrefix
         ].checkboxPowerLabel
     )
-        .setId('twms-checkbox-power')
         .setTooltip(
             TWMarketScanner.language[TWMarketScanner.languagePrefix]
                 .checkboxPowerTooltip
         )
-        .setSelected(TWMarketScanner.power);
+        .setSelected(TWMarketScanner.setting.power);
 
-    form.append(checkboxPower.getMainDiv());
+    checkboxSound = new west.gui.Checkbox(
+        TWMarketScanner.language[
+            TWMarketScanner.languagePrefix
+        ].checkboxSoundLabel
+    )
+        .setTooltip(
+            TWMarketScanner.language[TWMarketScanner.languagePrefix]
+                .checkboxSoundTooltip
+        )
+        .setSelected(TWMarketScanner.setting.sound);
+
+    checkboxesWrapper.append(checkboxPower.getMainDiv());
+    checkboxesWrapper.append(checkboxSound.getMainDiv());
+    form.append(checkboxesWrapper);
 
     for (let i = 0; i < TWMarketScanner.MAX_OFFERS; i += 1) {
         row = $("<div class='twms-form-row'/>");
@@ -504,11 +539,13 @@ TWMarketScanner.showSetting = function () {
                 TWMarketScanner.SETTING_PREFIX,
                 JSON.stringify({
                     power: checkboxPower.isSelected() ? 'on' : 'off',
+                    sound: checkboxSound.isSelected() ? 'on' : 'off',
                     setting: settingsToSave,
                 })
             );
-            TWMarketScanner.setting = settingsToSave;
-            TWMarketScanner.power = checkboxPower.isSelected();
+            TWMarketScanner.setting.data = settingsToSave;
+            TWMarketScanner.setting.power = checkboxPower.isSelected();
+            TWMarketScanner.setting.sound = checkboxSound.isSelected();
 
             TWMarketScanner.stopTimer();
 
@@ -534,21 +571,22 @@ TWMarketScanner.showSetting = function () {
         }
     );
 
-    buttonsWrapper.append(saveBtn.getMainDiv(), cancelBtn.getMainDiv());
+    footerWrapper = $('<div class="twms-2-columns-wrapper" />');
 
     info = $(
-        "<span class='twsm-infoText'>" +
+        "<a href='@@homepage' target='_blank' class='twsm-infoText'>" +
             TWMarketScanner.SCRIPT_NAME +
             ' v. ' +
             TWMarketScanner.VERSION +
-            '</span>'
+            '</a>'
     );
 
+    footerWrapper.append(info);
+    buttonsWrapper.append(saveBtn.getMainDiv(), cancelBtn.getMainDiv());
+    footerWrapper.append(buttonsWrapper);
     scrollPane = new west.gui.Scrollpane();
-    scrollPane
-        .appendContent(form)
-        .appendContent(buttonsWrapper)
-        .appendContent(info);
+    scrollPane.appendContent(form).appendContent(footerWrapper);
+
     settingWindow.appendToContentPane(scrollPane.getMainDiv());
 };
 

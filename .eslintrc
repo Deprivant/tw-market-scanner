@@ -4,6 +4,7 @@
     "globals": {
         "$": true,
         "Ajax": true,
+        "Audio": true,
         "document": true,
         "format_money": true,
         "format_number": true,
@@ -15,7 +16,7 @@
         "MarketWindow": true,
         "MessageError": true,
         "west": true,
-        "wman": true,
+        "wman": true
     },
     "rules": {
         "prettier/prettier": "error",

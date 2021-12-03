@@ -22,7 +22,7 @@ V případě vypnutí skriptu (v nastavení) ikonka zešedne:
 
 Klikem na ikonku se zobrazí nastavení. Zde je možné nastavit až 10 předmětů k vyhledávání, podle názvu ( `med` najde med, ale i např. lis na med) a maximální částky za jeden kus (neplést s celkovou částkou nabídky na trhu).
 
-V případě potřeby lze pravidelné skenování v nastavení vypnout.
+V případě potřeby lze pravidelné skenování v nastavení vypnout. Lze také vypnout/zapnout zvukové upozornění. Pokud skript nalezne požadované předměty, při zobrazení výsledků krátce zapípá.
 
 ![The West Market Scanner Menu Icon](https://github.com/Deprivant/tw-market-scanner/blob/main/docs/twms-setting-image.png?raw=true)
 
