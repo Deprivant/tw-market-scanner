@@ -1,6 +1,6 @@
 {
     "name": "tw-market-scanner",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "The Script for the-west.cz.",
     "main": "scr/script.js",
     "author": "Deprivant",
