@@ -454,8 +454,8 @@ TWMarketScanner.showSetting = function () {
         .setTitle(
             TWMarketScanner.language[TWMarketScanner.languagePrefix].setting
         )
-        .setMinSize(540, 484)
-        .setSize(540, 484);
+        .setMinSize(525, 484)
+        .setSize(525, 484);
 
     form = $('<div />');
 

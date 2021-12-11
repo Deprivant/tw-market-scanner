@@ -72,11 +72,20 @@
 }
 /* form */
 .twms-form-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+
     .tw2gui_textfield_label {
         display: inline-block;
-        margin-left: 10px;
-        width: 78px;
+        width: 65px;
         font-size: 12px;
+    }
+
+    .tw2gui_textfield_wrapper:first-child {
+        .tw2gui_textfield_label {
+            width: 80px;
+        }
     }
 }
 
