@@ -185,6 +185,12 @@ TWMarketScanner.getAllScans = function () {
             i,
             u;
 
+        if ($('#TWMS-result-button').length) {
+            // eslint-disable-next-line no-console
+            console.log('Schovávám minulé okno s výsledkama');
+            TWMarketScanner.resultsWindow.hide();
+        }
+
         TWMarketScanner.resultsWindow = new west.gui.Dialog(
             TWMarketScanner.language[
                 TWMarketScanner.languagePrefix
@@ -365,7 +371,7 @@ TWMarketScanner.generateTable = function (data) {
                 "' /></td><td class='twms-text-left'>" +
                 itemText +
                 "<td class='twms-text-right'>$" +
-                format_money(pricePerPiece) +
+                format_money(Math.round(pricePerPiece * 100) / 100) +
                 "</td><td class='twms-text-center'>" +
                 format_number(itemCount) +
                 "</td><td class='twms-text-right'>$" +
