@@ -211,7 +211,7 @@ TWMarketScanner.getAllScans = function () {
 
                     for (u = 0; u < resultForOneItem.length; u += 1) {
                         currentBidPricePerPiece =
-                            resultForOneItem[u].current_bid /
+                            resultForOneItem[u].auction_price /
                             resultForOneItem[u].item_count;
                         maxPricePerPiece =
                             resultForOneItem[u].max_price /
@@ -228,7 +228,7 @@ TWMarketScanner.getAllScans = function () {
                             itemId = resultForOneItem[u].item_id;
 
                             totalPrice =
-                                resultForOneItem[u].current_bid ||
+                                resultForOneItem[u].auction_price ||
                                 resultForOneItem[u].max_price;
 
                             dataForItem[u] = {
